@@ -27,6 +27,11 @@ from igl import boundary_loop, map_vertices_to_circle, harmonic_weights, adjacen
 PERTURBATION = 0.000000001
 TOLERANCE = 0.00001
 
+#Experimenting on padding - integer multiples of the number of x/y grids
+#that we want to pad the heat maps with
+PADDING_FACTOR_X = 1
+PADDING_FACTOR_Y = 1
+
 ################################################################################  
 ### METHOD FOR INITIALIZING HEAT MAP AND SURFACE DATA FOR EACH ANIMAL OBJECT ###
 ################################################################################
