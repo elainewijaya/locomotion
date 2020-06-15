@@ -212,7 +212,10 @@ def getVertexCoordinates(animal_obj, freqs):
 
   #gather relevant parameters
   grid_size = animal_obj.get_grid_size()
-  num_x_grid, num_y_grid = animal_obj.get_num_grids()
+  padded_num_x_grid, padded_num_y_grid = animal_obj.get_padded_num_grids()
+  x_bounds, y_bounds = animal_obj.get_original_bounds()
+  x_padding, y_padding = animal_obj.get_padding()
+
 
   #normalize the values to floats between 0 and a specified z-dimension
   m = mean(freqs)
@@ -223,12 +226,15 @@ def getVertexCoordinates(animal_obj, freqs):
     freqs[i] = list(map(lambda x : z_dim*x, freqs[i]))
 
   #initialize list of coordinates to return
-  coordinates = []
+  coordinates = [[-1, -1, -1]] * (padded_num_x_grid * padded_num_y_grid)
 
   #append coordinates for the lower left corner of each square in the heat map grid
-  for i in range(num_x_grid):
-    for j in range(num_y_grid):
-      coordinates.append([i*grid_size, j*grid_size, freqs[i][j]])
+  for i in range(padded_num_x_grid):
+    for j in range(padded_num_y_grid):
+      if i in range(*x_bounds) and j in range(*y_bounds):
+        coordinates[i * padded_num_y_grid + j] = [i*grid_size, j*grid_size, freqs[i - x_padding][j - y_padding]]
+      else:
+        coordinates[i * padded_num_y_grid + j] = [i*grid_size, j*grid_size, 0]
 
   return coordinates
 
@@ -243,16 +249,16 @@ def getTriangles(animal_obj):
       in the triangulation of a surface
   """
   #store relevant parameters
-  num_x_grid, num_y_grid = animal_obj.get_num_grids()
+  padded_num_x_grid, padded_num_y_grid = animal_obj.get_padded_num_grids()
 
   #initialize triangle list
   triangles = []
  
   #iterate through lower left corners of grid and append canonical triangles
-  for i in range(num_x_grid-1):
-    for j in range(num_y_grid-1):
-      triangles.append([i*num_y_grid+j, (i+1)*num_y_grid+j, (i+1)*num_y_grid+(j+1)])
-      triangles.append([i*num_y_grid+j, (i+1)*num_y_grid+(j+1), i*num_y_grid+(j+1)])
+  for i in range(padded_num_x_grid-1):
+    for j in range(padded_num_y_grid-1):
+      triangles.append([i*padded_num_y_grid+j, (i+1)*padded_num_y_grid+j, (i+1)*padded_num_y_grid+(j+1)])
+      triangles.append([i*padded_num_y_grid+j, (i+1)*padded_num_y_grid+(j+1), i*padded_num_y_grid+(j+1)])
 
   return triangles
   
@@ -340,12 +346,12 @@ def findCentralVertex(animal_obj):
   """
   #get the regular coordinates in the x, y dimension to find the central vertex in that plane
   x_y_coordinates = [coord[:2] for coord in animal_obj.get_regular_coordinates()]
-  num_x_grid, num_y_grid = animal_obj.get_num_grids()
+  padded_num_x_grid, padded_num_y_grid = animal_obj.get_padded_num_grids()
   grid_size = animal_obj.get_grid_size()
 
   #get the central coordinate in the grid. It must be a multiple of the grid size.
-  mid_x_coordinate = (num_x_grid // 2) * grid_size
-  mid_y_coordinate = (num_y_grid // 2) * grid_size
+  mid_x_coordinate = (padded_num_x_grid // 2) * grid_size
+  mid_y_coordinate = (padded_num_y_grid // 2) * grid_size
 
   #find the index of this central coordinate
   central_vertex = x_y_coordinates.index([mid_x_coordinate, mid_y_coordinate])

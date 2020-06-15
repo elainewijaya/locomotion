@@ -59,10 +59,12 @@ class Animal():
         self.__grid_size = None
         self.__num_x_grid = None
         self.__num_y_grid = None
-        self.__x_padding_factor = None
-        self.__y_padding_factor = None
+        self.__x_padding = None
+        self.__y_padding = None
         self.__padded_num_x_grid = None
         self.__padded_num_y_grid = None
+        self.__original_x_bounds = None
+        self.__original_y_bounds = None
         self.__perturbation = None
         self.__tolerance = None
         self.__num_verts = None
@@ -253,14 +255,22 @@ class Animal():
         return self.__num_x_grid, self.__num_y_grid
 
     def set_padding(self, x_padding_factor, y_padding_factor):
-        self.__x_padding_factor = x_padding_factor
-        self.__y_padding_factor = y_padding_factor
         min_num_grid = min(self.__num_x_grid, self.__num_y_grid)
-        self.__padded_num_x_grid = self.__num_x_grid + 2*self.__x_padding_factor*min_num_grid
-        self.__padded_num_y_grid = self.__num_y_grid + 2*self.__y_padding_factor*min_num_grid
+        self.__x_padding = x_padding_factor*min_num_grid
+        self.__y_padding = y_padding_factor*min_num_grid
+        self.__original_x_bounds = self.__x_padding, self.__x_padding + self.__num_x_grid
+        self.__original_y_bounds = self.__y_padding, self.__y_padding + self.__num_y_grid
+        self.__padded_num_x_grid = self.__num_x_grid + 2*self.__x_padding
+        self.__padded_num_y_grid = self.__num_y_grid + 2*self.__y_padding
+
+    def get_padding(self):
+        return (self.__x_padding, self.__y_padding)
 
     def get_padded_num_grids(self):
         return (self.__padded_num_x_grid, self.__padded_num_y_grid)
+
+    def get_original_bounds(self):
+        return (self.__original_x_bounds, self.__original_y_bounds)
 
     def set_perturbation(self, perturbation):
         """
