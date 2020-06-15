@@ -28,9 +28,13 @@ PERTURBATION = 0.000000001
 TOLERANCE = 0.00001
 
 #Experimenting on padding - integer multiples of the number of x/y grids
-#that we want to pad the heat maps with
-PADDING_FACTOR_X = 1
-PADDING_FACTOR_Y = 1
+#that we want to pad the heat maps with. For simplicity, in this case, since
+#our aspect ratio is 2:1, both padding factors will be padding an extra 
+#num_y_grids (since the length is just twice of it)
+X_PADDING_FACTOR = 1
+Y_PADDING_FACTOR = 1
+#to get equal padding throughout, use the ratio PADDING_FACTOR_X : PADDING_FACTOR_Y = 1:1
+#to get an overall square padding, use the ratio PADDING_FACTOR_X : PADDING_FACTOR_Y = 2:3 
 
 ################################################################################  
 ### METHOD FOR INITIALIZING HEAT MAP AND SURFACE DATA FOR EACH ANIMAL OBJECT ###
@@ -62,6 +66,7 @@ def getSurfaceData(animal_obj, grid_size, start_time=None, end_time=None):
 
   #store given parameters
   animal_obj.set_grid_size(grid_size)
+  animal_obj.set_padding(X_PADDING_FACTOR, Y_PADDING_FACTOR)
   animal_obj.set_perturbation(PERTURBATION)
   animal_obj.set_tolerance(TOLERANCE)
   
