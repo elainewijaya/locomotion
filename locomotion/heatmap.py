@@ -225,6 +225,9 @@ def getVertexCoordinates(animal_obj, freqs):
     freqs[i] = animal.normalize(freqs[i],m,s)
     freqs[i] = list(map(lambda x : z_dim*x, freqs[i]))
 
+  flattened_freqs = [item for sublist in freqs for item in sublist]
+  min_freq = min(flattened_freqs)
+
   #initialize list of coordinates to return
   coordinates = [[-1, -1, -1]] * (padded_num_x_grid * padded_num_y_grid)
 
@@ -234,7 +237,7 @@ def getVertexCoordinates(animal_obj, freqs):
       if i in range(*x_bounds) and j in range(*y_bounds):
         coordinates[i * padded_num_y_grid + j] = [i*grid_size, j*grid_size, freqs[i - x_padding][j - y_padding]]
       else:
-        coordinates[i * padded_num_y_grid + j] = [i*grid_size, j*grid_size, 0]
+        coordinates[i * padded_num_y_grid + j] = [i*grid_size, j*grid_size, min_freq]
 
   return coordinates
 
@@ -418,7 +421,7 @@ def getFlatCoordinates(animal_obj):
 
   # map internal vertices to unit circle
   flat_coordinates = harmonic_weights(regular_coordinates, triangles, boundary_vertices, flattened_boundary_coordinates, 1)
-  flat_coordinates = list(flat_coordinates)
+  flat_coordinates = [list(coord) for coord in flat_coordinates]
 
   # apply a conformal automorphism (Mobius transformation) of the unit disk that moves the center of mass of the flattened coordinates to the origin
   p = mean([c[0] for c in flat_coordinates])
@@ -929,8 +932,9 @@ def computeOneCSD(animal_obj_0, animal_obj_1, fullmode=False, outdir=None):
   print("Measuring conformal spatiotemporal distance between heat maps of %s and %s..." % (animal_obj_0.get_name(),animal_obj_1.get_name()))
 
   #calculate the optimal rotation for aligning the triangulations of the two animals
-  #theta = optimalRotation(animal_obj_0,animal_obj_1)
-  theta = 0
+  theta = optimalRotation(animal_obj_0,animal_obj_1)
+  print(theta)
+  # theta = 0
 
   #store relevant parameters.  Note that we assume both animal observations have the same dimensions
   x_dim, y_dim = animal_obj_0.get_dims()
