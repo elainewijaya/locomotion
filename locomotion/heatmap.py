@@ -32,7 +32,7 @@ TOLERANCE = 0.00001
 #our aspect ratio is 2:1, both padding factors will be padding an extra 
 #num_y_grids (since the length is just twice of it)
 X_PADDING_FACTOR = 1
-Y_PADDING_FACTOR = 1
+Y_PADDING_FACTOR = 1.5
 #to get equal padding throughout, use the ratio PADDING_FACTOR_X : PADDING_FACTOR_Y = 1:1
 #to get an overall square padding, use the ratio PADDING_FACTOR_X : PADDING_FACTOR_Y = 2:3 
 
@@ -87,6 +87,16 @@ def getSurfaceData(animal_obj, grid_size, start_time=None, end_time=None):
   animal_obj.set_num_triangles(len(triangles))
   animal_obj.set_triangulation(triangles)
 
+  #================= PRUNING TO CIRCLE =================
+  circle_coords, circle_triangles = pruneTrianglesToCircle(animal_obj)
+
+  animal_obj.set_num_verts(len(circle_coords))
+  animal_obj.set_regular_coordinates(circle_coords)
+
+  animal_obj.set_num_triangles(len(circle_triangles))
+  animal_obj.set_triangulation(circle_triangles)
+  #================= PRUNING TO CIRCLE =================
+
   #calculate and store colors for output file
   colors = getTriangleColors(animal_obj)
   animal_obj.set_colors(colors)
@@ -122,7 +132,7 @@ def getSurfaceData(animal_obj, grid_size, start_time=None, end_time=None):
   animal_obj.set_interior_vertex_bfs(interior_vertex_bfs)
 
   #calculate and record triangle-triangle adjacency matrix
-  triangle_adjacency_matrix = triangle_triangle_adjacency(array(triangles))[0]
+  triangle_adjacency_matrix = triangle_triangle_adjacency(array(circle_triangles))[0]
   animal_obj.set_triangle_triangle_adjacency(triangle_adjacency_matrix)
 
   
@@ -264,6 +274,48 @@ def getTriangles(animal_obj):
       triangles.append([i*padded_num_y_grid+j, (i+1)*padded_num_y_grid+(j+1), i*padded_num_y_grid+(j+1)])
 
   return triangles
+
+def pruneTrianglesToCircle(animal_obj):
+  regular_coordinates = animal_obj.get_regular_coordinates()
+  triangles = animal_obj.get_triangulation()
+  num_verts = animal_obj.get_num_verts()
+  num_triangles = animal_obj.get_num_triangles()
+  central_vertex = findCentralVertex(animal_obj)
+  central_coordinate = regular_coordinates[central_vertex]
+  # radius of circle in actual coordinate units
+  circle_radius = (animal_obj.get_padded_num_grids()[0]/2) * animal_obj.get_grid_size()
+
+  circle_coordinates = [[-1,-1,-1]]*num_verts
+  circle_triangles = [[-1,-1,-1]]*num_triangles
+
+  for vertex, coord in enumerate(regular_coordinates):
+    if (linalg.norm(array(coord[:2]) - array(central_coordinate[:2])) < circle_radius - 10):
+      circle_coordinates[vertex] = coord
+
+  for triangle_i, triangle in enumerate(triangles):
+    valid_triangle = True
+    for vertex in triangle:
+      if circle_coordinates[vertex] == [-1, -1, -1]:
+          valid_triangle = False
+    if valid_triangle:
+      circle_triangles[triangle_i] = triangle
+
+  # print(array(circle_coordinates))
+  # print(array(circle_triangles))
+
+  # coordinates and old indices of the coords in the circle
+  circle_vertices_mapping = [i for (i, coord) in enumerate(circle_coordinates) if coord != [-1, -1, -1]]
+  # final circle coordinates (without indices) to return
+  circle_coords = [coord for coord in circle_coordinates if coord != [-1, -1, -1]]
+
+  circle_triangles = [triangle for triangle in circle_triangles if triangle != [-1, -1, -1]]
+  for triangle in circle_triangles:
+    for i in range(3):
+      # for each vertex of the triangle, replace it with the new index
+      original_index = triangle[i]
+      triangle[i] = circle_vertices_mapping.index(original_index)
+
+  return (circle_coords, circle_triangles)
   
 def getBoundaryLoop(animal_obj):
   """ Given an animal object, get its boundary vertices in counter-clockwise order. This method is a wrapper for the corresponding IGL function.
